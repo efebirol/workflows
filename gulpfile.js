@@ -6,16 +6,38 @@ var gulp = require('gulp'),
     connect = require('gulp-connect'),
     concat = require('gulp-concat');
 
-var coffeeSources = ['components/coffee/tagline.coffee'];
-var jsSources = [
+var env,
+    coffeeSources,
+    jsSources,
+    sassSources,
+    htmlSources,
+    jsonSources,
+    outputDir,
+    sassStyle;
+
+env = process.env.NODE_ENV || 'development';        //check if "NODE_ENV" is set, otherwise set 'development'
+
+if (env==='development') {
+    outputDir = 'builds/development/';
+    sassStyle = 'expanded';
+    gutil.log("-- Building in Development");
+} else {
+    outputDir = 'builds/production/';
+    sassStyle = 'compressed';
+    gutil.log("-- Building in Production");
+}
+
+
+coffeeSources = ['components/coffee/tagline.coffee'];
+jsSources = [
     'components/scripts/rclick.js',
     'components/scripts/pixgrid.js',
     'components/scripts/tagline.js',
     'components/scripts/template.js'
 ];
-var sassSources = ['components/sass/style.scss'];
-var htmlSources = ['builds/development/*.html'];
-var jsonSources = ['builds/development/js/*.json'];
+sassSources = ['components/sass/style.scss'];
+htmlSources = [outputDir + '*.html'];
+jsonSources = [outputDir + 'js/*.json'];
 
 
 //can be called in the command with "gulp task"
@@ -43,7 +65,7 @@ gulp.task('js', function () {
     gulp.src(jsSources)
         .pipe(concat('script.js'))
         .pipe(browserify())
-        .pipe(gulp.dest('builds/development/js'))   //put it in the "js" folder
+        .pipe(gulp.dest(outputDir+'js'))   //put it in the "js" folder
         .pipe(connect.reload())                     //reload the webpage
 });
 
@@ -52,11 +74,11 @@ gulp.task('compass', function () {
     gulp.src(sassSources)
         .pipe(compass({                 //configure the compass for the sass (where to find what)
             sass: 'components/sass',
-            image: 'builds/development/images',
-            style: 'expanded'     //style how to indent the CSS (predefined in 'expanded', 'nested', 'compact' and 'compressed')
+            image: outputDir+'images',
+            style: sassStyle     //style how to indent the CSS (predefined in 'expanded', 'nested', 'compact' and 'compressed')
         })
             .on('error', gutil.log))
-        .pipe(gulp.dest('builds/development/css'))  //put it in the "css" folder
+        .pipe(gulp.dest(outputDir+'css'))  //put it in the "css" folder
         .pipe(connect.reload())
     gutil.log('- compass task - changes in CSS.');
 });
@@ -73,7 +95,7 @@ gulp.task('watch', function () {
 
 gulp.task('connect', function() {
     connect.server({
-        root: 'builds/development/',
+        root: outputDir,
         livereload: true
     });
 });
